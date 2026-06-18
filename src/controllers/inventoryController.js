@@ -1,6 +1,6 @@
 import Inventory from '../models/Inventory.js';
 import bwipjs from 'bwip-js';
-import { uploadFile, deleteFile } from '../config/r2.js';
+import { uploadFile, deleteFile } from '../config/cloudinary.js';
 import { parseInventoryExcel, exportToExcel } from '../utils/excelHelper.js';
 
 // Helper to generate Base64 Barcode (Code128) and QR Code

@@ -1,6 +1,6 @@
 import Product from '../models/Product.js';
 import Settings from '../models/Settings.js';
-import { uploadFile, deleteFile } from '../config/r2.js';
+import { uploadFile, deleteFile } from '../config/cloudinary.js';
 
 /**
  * Get published products for the public catalog website

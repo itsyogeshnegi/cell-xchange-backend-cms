@@ -1,7 +1,7 @@
 import Customer from '../models/Customer.js';
 import Sale from '../models/Sale.js';
 import Purchase from '../models/Purchase.js';
-import { uploadFile, deleteFile } from '../config/r2.js';
+import { uploadFile, deleteFile } from '../config/cloudinary.js';
 
 /**
  * Get all customers (with pagination and search)

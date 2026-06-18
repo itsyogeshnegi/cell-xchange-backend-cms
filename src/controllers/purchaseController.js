@@ -3,7 +3,7 @@ import Inventory from '../models/Inventory.js';
 import Customer from '../models/Customer.js';
 import Settings from '../models/Settings.js';
 import Notification from '../models/Notification.js';
-import { uploadFile } from '../config/r2.js';
+import { uploadFile } from '../config/cloudinary.js';
 import bwipjs from 'bwip-js';
 import { generatePurchaseInvoicePDF } from '../utils/pdfGenerator.js';
 

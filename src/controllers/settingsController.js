@@ -1,5 +1,5 @@
 import Settings from '../models/Settings.js';
-import { uploadFile, deleteFile } from '../config/r2.js';
+import { uploadFile, deleteFile } from '../config/cloudinary.js';
 
 /**
  * Get shop configurations

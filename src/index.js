@@ -21,7 +21,6 @@ import cmsRoutes from './routes/cmsRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
-import auditLogRoutes from './routes/auditLogRoutes.js';
 import reportsRoutes from './routes/reportsRoutes.js';
 
 // Load Environment Variables
@@ -56,7 +55,6 @@ app.use('/api/cms', cmsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
