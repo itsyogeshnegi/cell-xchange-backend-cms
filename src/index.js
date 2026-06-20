@@ -6,6 +6,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import swaggerUi from 'swagger-ui-express';
 
+// Load Environment Variables BEFORE importing custom modules
+dotenv.config();
+
 import { connectDB } from './config/db.js';
 import { auditLogger } from './middleware/auditMiddleware.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -23,8 +26,6 @@ import settingsRoutes from './routes/settingsRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import reportsRoutes from './routes/reportsRoutes.js';
 
-// Load Environment Variables
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
