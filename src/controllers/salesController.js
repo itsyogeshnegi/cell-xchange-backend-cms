@@ -115,10 +115,10 @@ export const createSale = async (req, res) => {
     });
 
     const discVal = Number(discount) || 0;
+    const totalAmount = Math.max(0, subTotal - discVal);
     // GST included in price:
-    const baseValue = (subTotal - discVal) / 1.18;
-    const gstAmount = (subTotal - discVal) - baseValue;
-    const totalAmount = subTotal - discVal;
+    const baseValue = totalAmount / 1.18;
+    const gstAmount = totalAmount - baseValue;
 
     // 6. Create Sale
     const sale = await Sale.create({

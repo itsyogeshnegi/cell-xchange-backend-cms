@@ -1,6 +1,24 @@
 import Product from '../models/Product.js';
 import Settings from '../models/Settings.js';
+import Inventory from '../models/Inventory.js';
 import { uploadFile, deleteFile } from '../config/cloudinary.js';
+
+// Helper to map backend Inventory item to frontend CMS product schema
+const mapInventoryToCmsProduct = (item) => ({
+  _id: item._id,
+  title: `${item.brand} ${item.model}`,
+  category: item.productType,
+  brand: item.brand,
+  model: item.model,
+  price: item.sellingPrice,
+  ram: item.ram,
+  storage: item.storage,
+  condition: item.condition,
+  images: item.images,
+  isFeatured: true, // Display available stock items as featured on the public website
+  isPublished: item.showOnWebsite !== false,
+  createdAt: item.createdAt,
+});
 
 /**
  * Get published products for the public catalog website
@@ -10,21 +28,21 @@ export const getPublicProducts = async (req, res) => {
   const { category, brand, condition, maxPrice, search } = req.query;
 
   try {
-    const query = { isPublished: true };
+    const query = { showOnWebsite: { $ne: false }, deviceStatus: 'Available' };
 
-    if (category) query.category = category;
+    if (category) query.productType = category;
     if (brand) query.brand = brand;
     if (condition) query.condition = condition;
-    if (maxPrice) query.price = { $lte: parseFloat(maxPrice) };
+    if (maxPrice) query.sellingPrice = { $lte: parseFloat(maxPrice) };
     if (search) {
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
         { brand: { $regex: search, $options: 'i' } },
         { model: { $regex: search, $options: 'i' } },
       ];
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    const items = await Inventory.find(query).sort({ createdAt: -1 });
+    const products = items.map(mapInventoryToCmsProduct);
     return res.json(products);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -39,11 +57,11 @@ export const getPublicProductById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const product = await Product.findOne({ _id: id, isPublished: true });
-    if (!product) {
+    const item = await Inventory.findOne({ _id: id, showOnWebsite: { $ne: false }, deviceStatus: 'Available' });
+    if (!item) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    return res.json(product);
+    return res.json(mapInventoryToCmsProduct(item));
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -62,17 +80,18 @@ export const getProducts = async (req, res) => {
     const query = {};
     if (search) {
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
         { brand: { $regex: search, $options: 'i' } },
         { model: { $regex: search, $options: 'i' } },
       ];
     }
 
-    const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
+    const total = await Inventory.countDocuments(query);
+    const items = await Inventory.find(query)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
+
+    const products = items.map(mapInventoryToCmsProduct);
 
     return res.json({
       products,
@@ -254,6 +273,31 @@ export const updateWebCMS = async (req, res) => {
     await req.logActivity('UPDATE_CMS_HOMEPAGE', 'Updated public homepage copywriting structure');
     
     return res.json(settings);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Toggle visibility of inventory stock item on CMS website
+ * Route: PUT /api/cms/products/:id/toggle
+ */
+export const toggleProductVisibility = async (req, res) => {
+  const { id } = req.params;
+  const { isPublished } = req.body;
+
+  try {
+    const item = await Inventory.findById(id);
+    if (!item) {
+      return res.status(404).json({ message: 'Inventory stock item not found' });
+    }
+
+    item.showOnWebsite = isPublished === true || isPublished === 'true';
+    await item.save();
+
+    await req.logActivity('TOGGLE_CMS_PRODUCT_VISIBILITY', `Toggled CMS visibility of ${item.brand} ${item.model} to ${item.showOnWebsite}`);
+
+    return res.json({ message: 'Product visibility updated successfully', isPublished: item.showOnWebsite });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

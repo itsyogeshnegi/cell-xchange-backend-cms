@@ -1,4 +1,34 @@
 import PDFDocument from 'pdfkit';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const getLogoImage = async (logoUrl) => {
+  if (!logoUrl) return null;
+  
+  if (logoUrl.startsWith('/uploads/')) {
+    const localPath = path.join(__dirname, '../../', logoUrl);
+    if (fs.existsSync(localPath)) {
+      return localPath;
+    }
+  }
+  
+  if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
+    try {
+      const response = await axios.get(logoUrl, { responseType: 'arraybuffer', timeout: 5000 });
+      return Buffer.from(response.data);
+    } catch (err) {
+      console.error('Error fetching remote logo for PDF:', err.message);
+      return null;
+    }
+  }
+  
+  return null;
+};
 
 /**
  * Helper to generate a PDF buffer using PDFKit.
@@ -27,13 +57,24 @@ const buildPDFBuffer = (docSetup, drawFn) => {
  * Generates an A4 standard GST invoice for sales.
  */
 export const generateSaleInvoicePDF = async (sale, settings) => {
+  const logoImg = await getLogoImage(settings.logoUrl);
   return buildPDFBuffer({ size: 'A4', margin: 40 }, (doc) => {
     // Header
-    doc.fillColor('#0F172A').fontSize(20).text(settings.shopName, { align: 'left' });
-    doc.fontSize(10).fillColor('#64748B')
-       .text(settings.address)
-       .text(`Phone: ${settings.phone} | Email: ${settings.email}`)
-       .text(`GSTIN: ${settings.gstNumber || 'N/A'}`);
+    if (logoImg) {
+      doc.image(logoImg, 40, 30, { height: 40 });
+      doc.fillColor('#0F172A').fontSize(16).text(settings.shopName, 100, 35);
+      doc.fontSize(8).fillColor('#64748B')
+         .text(settings.address, 100, 52)
+         .text(`Phone: ${settings.phone} | Email: ${settings.email}`, 100, 62)
+         .text(`GSTIN: ${settings.gstNumber || 'N/A'}`, 100, 72);
+      doc.y = 90;
+    } else {
+      doc.fillColor('#0F172A').fontSize(20).text(settings.shopName, { align: 'left' });
+      doc.fontSize(10).fillColor('#64748B')
+         .text(settings.address)
+         .text(`Phone: ${settings.phone} | Email: ${settings.email}`)
+         .text(`GSTIN: ${settings.gstNumber || 'N/A'}`);
+    }
     
     doc.moveDown();
     doc.strokeColor('#E2E8F0').lineWidth(1).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
@@ -117,9 +158,16 @@ export const generateSaleInvoicePDF = async (sale, settings) => {
  * Generates an 80mm thermal invoice receipt.
  */
 export const generateThermalReceiptPDF = async (sale, settings) => {
+  const logoImg = await getLogoImage(settings.logoUrl);
   // 80mm wide receipt is about 226 points. We dynamically size height depending on item count.
   const height = 350 + (sale.items.length * 35);
   return buildPDFBuffer({ size: [226, height], margin: 10 }, (doc) => {
+    if (logoImg) {
+      doc.image(logoImg, (226 - 45) / 2, 10, { height: 30 });
+      doc.y = 45;
+    } else {
+      doc.y = 10;
+    }
     doc.fillColor('#000000').fontSize(12).text(settings.shopName, { align: 'center' });
     doc.fontSize(7).text(settings.address, { align: 'center' });
     doc.text(`GST: ${settings.gstNumber || 'N/A'}`, { align: 'center' });
@@ -162,13 +210,24 @@ export const generateThermalReceiptPDF = async (sale, settings) => {
  * Generates an A4 standard Purchase Receipt when the shop buys a device from a customer.
  */
 export const generatePurchaseInvoicePDF = async (purchase, settings) => {
+  const logoImg = await getLogoImage(settings.logoUrl);
   return buildPDFBuffer({ size: 'A4', margin: 40 }, (doc) => {
     // Header
-    doc.fillColor('#0F172A').fontSize(20).text(settings.shopName, { align: 'left' });
-    doc.fontSize(10).fillColor('#64748B')
-       .text(settings.address)
-       .text(`Phone: ${settings.phone} | Email: ${settings.email}`)
-       .text('PURCHASE VOUCHER / INWARD RECEIPT', { align: 'right' });
+    if (logoImg) {
+      doc.image(logoImg, 40, 30, { height: 40 });
+      doc.fillColor('#0F172A').fontSize(16).text(settings.shopName, 100, 35);
+      doc.fontSize(8).fillColor('#64748B')
+         .text(settings.address, 100, 52)
+         .text(`Phone: ${settings.phone} | Email: ${settings.email}`, 100, 62)
+         .text('PURCHASE VOUCHER / INWARD RECEIPT', 100, 72, { align: 'right' });
+      doc.y = 90;
+    } else {
+      doc.fillColor('#0F172A').fontSize(20).text(settings.shopName, { align: 'left' });
+      doc.fontSize(10).fillColor('#64748B')
+         .text(settings.address)
+         .text(`Phone: ${settings.phone} | Email: ${settings.email}`)
+         .text('PURCHASE VOUCHER / INWARD RECEIPT', { align: 'right' });
+    }
     
     doc.moveDown();
     doc.strokeColor('#E2E8F0').lineWidth(1).moveTo(40, doc.y).lineTo(555, doc.y).stroke();

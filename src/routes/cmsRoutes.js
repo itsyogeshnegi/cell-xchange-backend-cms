@@ -6,6 +6,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  toggleProductVisibility,
   getWebCMS,
   updateWebCMS,
 } from '../controllers/cmsController.js';
@@ -23,6 +24,9 @@ router.get('/public/homepage', getWebCMS);
 router.route('/products')
   .get(protect, getProducts)
   .post(protect, requireRole(['admin']), upload.array('images', 10), createProduct);
+
+router.route('/products/:id/toggle')
+  .put(protect, requireRole(['admin']), toggleProductVisibility);
 
 router.route('/products/:id')
   .put(protect, requireRole(['admin']), upload.array('images', 10), updateProduct)

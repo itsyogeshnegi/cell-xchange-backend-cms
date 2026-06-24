@@ -83,12 +83,22 @@ export const createCustomer = async (req, res) => {
   try {
     const { fullName, phone, alternatePhone, gender, address, aadhaarNumber, panNumber, notes } = req.body;
 
+    // Validate required text fields
+    if (!fullName || !phone || !gender || !address || !aadhaarNumber || !panNumber) {
+      return res.status(400).json({ message: 'Name, Phone, Gender, Address, Aadhaar Number, and PAN Number are all required.' });
+    }
+
+    // Validate required files
+    if (!req.files || !req.files['customerPhoto'] || !req.files['aadhaarFront'] || !req.files['aadhaarBack'] || !req.files['panImage']) {
+      return res.status(400).json({ message: 'Customer Photo, Aadhaar Front, Aadhaar Back, and PAN Image document scans are all required.' });
+    }
+
     const customerExists = await Customer.findOne({ phone });
     if (customerExists) {
       return res.status(400).json({ message: 'Customer already exists with this phone number.' });
     }
 
-    // Process files if uploaded
+    // Process files
     let customerPhotoUrl = '';
     let aadhaarFrontUrl = '';
     let aadhaarBackUrl = '';

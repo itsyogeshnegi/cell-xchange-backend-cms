@@ -22,7 +22,7 @@ export const getSettings = async (req, res) => {
  * Route: PUT /api/settings
  */
 export const updateSettings = async (req, res) => {
-  const { shopName, gstNumber, address, phone, email, invoicePrefix, purchasePrefix, theme } = req.body;
+  const { shopName, gstNumber, address, phone, email, invoicePrefix, purchasePrefix, theme, removeLogo } = req.body;
 
   try {
     let settings = await Settings.findOne({});
@@ -30,12 +30,17 @@ export const updateSettings = async (req, res) => {
       settings = await Settings.create({});
     }
 
-    // Process logo if uploaded
+    // Process logo if uploaded or removed
     if (req.file) {
       if (settings.logoUrl) {
         await deleteFile(settings.logoUrl);
       }
       settings.logoUrl = await uploadFile(req.file);
+    } else if (removeLogo === 'true') {
+      if (settings.logoUrl) {
+        await deleteFile(settings.logoUrl);
+      }
+      settings.logoUrl = '';
     }
 
     settings.shopName = shopName || settings.shopName;

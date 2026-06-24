@@ -1,13 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import swaggerUi from 'swagger-ui-express';
-
-// Load Environment Variables BEFORE importing custom modules
-dotenv.config();
 
 import { connectDB } from './config/db.js';
 import { auditLogger } from './middleware/auditMiddleware.js';

@@ -82,6 +82,10 @@ const inventorySchema = new mongoose.Schema(
       enum: ['Available', 'Reserved', 'Sold', 'Returned', 'Repair'],
       default: 'Available',
     },
+    showOnWebsite: {
+      type: Boolean,
+      default: true,
+    },
     barcodeUrl: {
       type: String,
       default: '',
