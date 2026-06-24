@@ -50,10 +50,35 @@ export const uploadFile = async (file) => {
   // Compress images if the file uploaded is an image type
   if (file.mimetype.startsWith('image/')) {
     try {
+      let quality = 80;
+      let width = 1200;
+      console.log(`[Image Compressor] Starting compression for ${file.originalname} (original size: ${(file.size ? (file.size / 1024).toFixed(2) : 'unknown')} KB)`);
+      
       buffer = await sharp(file.buffer)
-        .resize({ width: 1200, fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 80, progressive: true })
+        .resize({ width, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality, progressive: true })
         .toBuffer();
+
+      // Ensure the image buffer is compressed under 500KB (512,000 bytes)
+      while (buffer.length > 500 * 1024) {
+        if (quality > 50) {
+          quality -= 10;
+        } else if (width > 300) {
+          width = Math.round(width * 0.8);
+        } else if (quality > 15) {
+          quality -= 5;
+        } else {
+          break; // Avoid infinite loop
+        }
+        
+        buffer = await sharp(file.buffer)
+          .resize({ width, fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality, progressive: true })
+          .toBuffer();
+      }
+
+      console.log(`[Image Compressor] Compression finished: ${(buffer.length / 1024).toFixed(2)} KB (width: ${width}, quality: ${quality})`);
+
       // Since it is compressed to JPEG, use .jpg extension and update mime type
       key = `${uniqueSuffix}.jpg`;
       mimeType = 'image/jpeg';
